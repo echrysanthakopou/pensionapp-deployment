@@ -1,0 +1,27 @@
+- name: Setup Pensions App
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+    - name: Install docker && docker-compose
+      vars:
+        docker_service_state: started
+        docker_service_enabled: true
+        docker_install_compose: true
+        docker_compose_path: /usr/local/bin/docker-compose
+      include_role:
+        name: geerlingguy.docker
+    - name: Deploy app
+      block:
+        - name: Copy docker-compose file
+          copy:
+            src: docker-compose.yml
+            dest: /home/app
+            mode: '0644'
+        - name: Run docker-compose
+          command: docker-compose up -d
+          args:
+            chdir: /home/app
+          changed_when: true

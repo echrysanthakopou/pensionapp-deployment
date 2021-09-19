@@ -1,0 +1,54 @@
+version: "3.3"
+
+services:
+
+  db:
+    container_name: "pensionapp-mysql"
+    image: "mysql:8"
+    volumes:
+      - "mysql-volume:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_USER: root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb1
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+  mailhog:
+    container_name: "pensionapp-mailhog"
+    image: "mailhog/mailhog:v1.0.1"
+    ports:
+      - "8025:8025"
+    restart: unless-stopped
+
+  backend:
+    container_name: "pensionapp-backend"
+    depends_on:
+      - db
+      - mailhog
+    image: "echrysanthakopou/back"
+    environment:
+      DB_IP: pensionapp-mysql
+      DB_PORT: 3306
+      DB_SCHEMA: mydb1
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_MAIL_HOST: pensionapp-mailhog
+      SPRING_MAIL_PORT: 1025
+    restart: unless-stopped
+
+  frontend:
+    container_name: "pensionapp-frontend"
+    depends_on:
+      - db
+      - backend
+    image: "echrysanthakopou/front"
+    environment:
+      REACT_APP_BACKEND_URL: "http://pensionapp-backend:8080"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  mysql-volume:
